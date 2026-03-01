@@ -21,19 +21,22 @@ app = FastAPI(
     version="1.0"
 )
 
-class Бронирование(Base):
+
+
+class Booking(Base):
     __tablename__ = "bookings"
 
     id = Column(Integer, primary_key=True, index=True)
-    кабинет = Column(String)
-    время_начала = Column(DateTime)
-    время_окончания = Column(DateTime)
+    room = Column(String)
+    start_time = Column(DateTime)
+    end_time = Column(DateTime)
 
 
 Base.metadata.create_all(bind=engine)
 
 
-def получить_бд():
+
+def get_db():
     db = SessionLocal()
     try:
         yield db
@@ -41,41 +44,44 @@ def получить_бд():
         db.close()
 
 
-@app.post("/добавить_бронь", summary="Добавить бронирование")
-def добавить_бронь(
-    кабинет: str,
-    время_начала: datetime,
-    время_окончания: datetime,
-    db: Session = Depends(получить_бд)
+@app.post("/add_booking", summary="Добавить бронирование")
+def add_booking(
+    room: str,
+    start_time: datetime,
+    end_time: datetime,
+    db: Session = Depends(get_db)
 ):
-    новая_бронь = Бронирование(
-        кабинет=кабинет,
-        время_начала=время_начала,
-        время_окончания=время_окончания
+
+    new_booking = Booking(
+        room=room,
+        start_time=start_time,
+        end_time=end_time
     )
 
-    db.add(новая_бронь)
+    db.add(new_booking)
     db.commit()
-    db.refresh(новая_бронь)
+    db.refresh(new_booking)
 
     return {
-        "сообщение": "Бронирование успешно добавлено",
-        "данные": новая_бронь
+        "message": "Бронирование успешно добавлено",
+        "id": new_booking.id,
+        "room": new_booking.room,
+        "start_time": new_booking.start_time,
+        "end_time": new_booking.end_time
     }
 
+@app.delete("/delete_booking/{booking_id}", summary="Удалить бронирование")
+def delete_booking(booking_id: int, db: Session = Depends(get_db)):
 
+    booking = db.query(Booking).filter(Booking.id == booking_id).first()
 
-@app.delete("/удалить_бронь/{id}", summary="Удалить бронирование")
-def удалить_бронь(id: int, db: Session = Depends(получить_бд)):
-    бронь = db.query(Бронирование).filter(Бронирование.id == id).first()
-
-    if not бронь:
+    if not booking:
         raise HTTPException(
             status_code=404,
             detail="Бронирование не найдено"
         )
 
-    db.delete(бронь)
+    db.delete(booking)
     db.commit()
 
-    return {"сообщение": "Бронирование успешно удалено"}
+    return {"message": "Бронирование успешно удалено"}
