@@ -22,7 +22,6 @@ app = FastAPI(
 )
 
 
-
 class Booking(Base):
     __tablename__ = "bookings"
 
@@ -33,7 +32,6 @@ class Booking(Base):
 
 
 Base.metadata.create_all(bind=engine)
-
 
 
 def get_db():
@@ -52,6 +50,18 @@ def add_booking(
     db: Session = Depends(get_db)
 ):
 
+    existing_booking = db.query(Booking).filter(
+        Booking.room == room,
+        Booking.start_time < end_time,
+        Booking.end_time > start_time
+    ).first()
+
+    if existing_booking:
+        raise HTTPException(
+            status_code=400,
+            detail="УЖЕ ЗАНЕТО БАРАН"
+        )
+
     new_booking = Booking(
         room=room,
         start_time=start_time,
@@ -63,12 +73,13 @@ def add_booking(
     db.refresh(new_booking)
 
     return {
-        "message": "Бронирование успешно добавлено",
+        "message": "записался",
         "id": new_booking.id,
         "room": new_booking.room,
         "start_time": new_booking.start_time,
         "end_time": new_booking.end_time
     }
+
 
 @app.delete("/delete_booking/{booking_id}", summary="Удалить бронирование")
 def delete_booking(booking_id: int, db: Session = Depends(get_db)):
@@ -78,10 +89,10 @@ def delete_booking(booking_id: int, db: Session = Depends(get_db)):
     if not booking:
         raise HTTPException(
             status_code=404,
-            detail="Бронирование не найдено"
+            detail="Booking not found"
         )
 
     db.delete(booking)
     db.commit()
 
-    return {"message": "Бронирование успешно удалено"}
+    return {"message": "удалил бронь"}
