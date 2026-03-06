@@ -59,7 +59,7 @@ def add_booking(
     if existing_booking:
         raise HTTPException(
             status_code=400,
-            detail="УЖЕ ЗАНЕТО БАРАН"
+            detail="УЖЕ ЗАНЕТО"
         )
 
     new_booking = Booking(
