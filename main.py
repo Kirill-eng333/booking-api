@@ -59,7 +59,7 @@ def add_booking(
     if existing_booking:
         raise HTTPException(
             status_code=400,
-            detail="УЖЕ ЗАНЕТО БАРАН"
+            detail="УЖЕ ЗАНЕТО"
         )
 
     new_booking = Booking(
@@ -96,3 +96,7 @@ def delete_booking(booking_id: int, db: Session = Depends(get_db)):
     db.commit()
 
     return {"message": "удалил бронь"}
+
+@app.get("/")
+def root():
+    return {"message": "API работает"}
